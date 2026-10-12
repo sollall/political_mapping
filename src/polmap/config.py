@@ -136,7 +136,7 @@ class Settings:
     @property
     def app_id(self) -> str | None:
         env = self.get("estat", "app_id_env", default="ESTAT_APP_ID")
-        return os.environ.get(env) or self.get("estat", "app_id")
+        return os.environ.get(env) or None
 
     def layer(self, name: str) -> Path:
         p = self.data_dir / name
@@ -151,11 +151,27 @@ def _resolve(root: Path, p: str | None) -> Path | None:
     return path if path.is_absolute() else (root / path).resolve()
 
 
+def load_dotenv(path: Path) -> None:
+    """KEY=VALUE 形式の .env を読み、まだ設定されていない環境変数だけを設定する。"""
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.removeprefix("export ").split("=", 1)
+        key, value = key.strip(), value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        os.environ.setdefault(key, value)
+
+
 def load_settings(path: str | Path) -> Settings:
     path = Path(path).resolve()
     raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     # パスはプロジェクトルート（settings の root、既定は設定ファイルの2階層上）からの相対
     root = _resolve(path.parent, raw.get("root", "..")) or path.parent
+    load_dotenv(root / ".env")  # アプリケーションIDなどの秘密情報（Git管理外）
     paths = raw.get("paths", {})
     prefs = [str(p).zfill(2) for p in (raw.get("scope", {}).get("prefectures") or [])]
     return Settings(

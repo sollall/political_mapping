@@ -17,7 +17,7 @@ python -m http.server -d web 8000    # http://localhost:8000/ で地図を開く
 
 ## 本番データで動かす
 
-1. **e-Stat のアプリケーションID** を取得し、環境変数に設定する：`export ESTAT_APP_ID=...`
+1. **e-Stat のアプリケーションID** を取得し、`.env.example` を `.env` にコピーして `ESTAT_APP_ID=` の後に書く（`.env` はGit管理外。環境変数 `ESTAT_APP_ID` があればそちらが優先）。
 2. **境界データ**: 国土数値情報「行政区域（N03）」2020年版の GeoJSON を `data/boundary/N03-20200101.geojson` に置く（パスは `config/settings.yaml` の `paths.boundary`）。
 3. **軸の統計表IDを埋める**: `config/axes.yaml` には Democracy 4 の有権者グループを参考にした16軸（直接測れる9軸＋代理指標7軸）が入っている。統計表ID（statsDataId）とカテゴリーコードは `TBD` のままなので、e-Stat で確認して置き換える。`polmap check` で未記入の箇所が一覧できる。
 4. **合併・分割の対応表**: 2015年の値を使う場合、`config/boundary_changes.csv` を確認・追記する（同梱の行は要確認の例）。

@@ -251,3 +251,17 @@ def test_demo_map_outputs(demo_run):
 def test_rerun_from_middle_stage(demo_run):
     s, _ = demo_run
     assert run_pipeline(s.root / "settings.yaml", start="analyze", end="validate") == "warn"
+
+
+def test_dotenv(tmp_path, monkeypatch):
+    from polmap.config import load_dotenv
+
+    monkeypatch.delenv("ESTAT_APP_ID", raising=False)
+    monkeypatch.delenv("POLMAP_KEEP", raising=False)
+    (tmp_path / ".env").write_text('# comment\nexport ESTAT_APP_ID="abc123"\nPOLMAP_KEEP=fromfile\n', encoding="utf-8")
+    monkeypatch.setenv("POLMAP_KEEP", "fromenv")
+    load_dotenv(tmp_path / ".env")
+    import os
+
+    assert os.environ["ESTAT_APP_ID"] == "abc123"
+    assert os.environ["POLMAP_KEEP"] == "fromenv"  # 既存の環境変数が優先
