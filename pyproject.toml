@@ -19,7 +19,7 @@ dependencies = [
   "topojson>=1.7",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = ["pytest>=7"]
 
 [project.scripts]

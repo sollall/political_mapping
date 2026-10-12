@@ -8,9 +8,9 @@
 e-Stat のアプリケーションIDやネットワークがなくても、架空の2県（デモ県・サンプル県）でパイプライン全体と地図を確認できる。
 
 ```sh
-pip install -e ".[dev]"
-polmap demo                          # 合成データ生成 → 全段階を実行
-python -m http.server -d web 8000    # http://localhost:8000/ で地図を開く
+uv sync                                     # 仮想環境の作成と依存パッケージのインストール
+uv run polmap demo                          # 合成データ生成 → 全段階を実行
+uv run python -m http.server -d web 8000    # http://localhost:8000/ で地図を開く
 ```
 
 検証レポートは `reports/demo/validation.md` に出る。
@@ -19,15 +19,16 @@ python -m http.server -d web 8000    # http://localhost:8000/ で地図を開く
 
 1. **e-Stat のアプリケーションID** を取得し、`.env.example` を `.env` にコピーして `ESTAT_APP_ID=` の後に書く（`.env` はGit管理外。環境変数 `ESTAT_APP_ID` があればそちらが優先）。
 2. **境界データ**: 国土数値情報「行政区域（N03）」2020年版の GeoJSON を `data/boundary/N03-20200101.geojson` に置く（パスは `config/settings.yaml` の `paths.boundary`）。
-3. **軸の統計表IDを埋める**: `config/axes.yaml` には Democracy 4 の有権者グループを参考にした16軸（直接測れる9軸＋代理指標7軸）が入っている。統計表ID（statsDataId）とカテゴリーコードは `TBD` のままなので、e-Stat で確認して置き換える。`polmap check` で未記入の箇所が一覧できる。
+3. **軸の統計表IDを埋める**: `config/axes.yaml` には Democracy 4 の有権者グループを参考にした16軸（直接測れる9軸＋代理指標7軸）が入っている。統計表ID（statsDataId）とカテゴリーコードは `TBD` のままなので、e-Stat で確認して置き換える。`uv run polmap check` で未記入の箇所が一覧できる。
 4. **合併・分割の対応表**: 2015年の値を使う場合、`config/boundary_changes.csv` を確認・追記する（同梱の行は要確認の例）。
 5. 実行：
 
 ```sh
-polmap check                         # 設定と軸定義の検証
-polmap run                           # fetch → stage → align → compute → analyze → map → validate
-polmap run --from analyze            # 途中の段階から再実行
-polmap run --to compute              # 途中の段階まで
+uv run polmap check                  # 設定と軸定義の検証
+uv run polmap run                    # fetch → stage → align → compute → analyze → map → validate
+uv run polmap run --from analyze     # 途中の段階から再実行
+uv run polmap run --to compute       # 途中の段階まで
+uv run pytest                        # テスト
 ```
 
 試作は `scope.prefectures: ["13"]`（東京都）から。空にすると全国。
