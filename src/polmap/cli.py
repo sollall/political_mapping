@@ -29,7 +29,9 @@ RUNNERS = {
 
 def run_pipeline(config: str | Path, start: str = "fetch", end: str = "validate", force_fetch: bool = False) -> str | None:
     settings = load_settings(config)
-    axes = load_axes(settings.axes_path)
+    axes, skipped = load_axes(settings.axes_path).without_placeholders()
+    if skipped:
+        log.warning("未記入（TBD）があるため次の軸を除いて実行します: %s", ", ".join(skipped))
     i, j = STAGES.index(start), STAGES.index(end)
     if i > j:
         raise ValueError(f"--from {start} は --to {end} より後の段階です")

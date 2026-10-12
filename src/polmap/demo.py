@@ -10,7 +10,8 @@ import json
 import numpy as np
 
 from .config import Settings
-from .fetch import save_raw
+from .config import load_axes
+from .fetch import save_raw, table_filters
 
 PREFS = {"98": "サンプル県", "99": "デモ県"}
 WARDS = ["北区", "中央区", "南区"]
@@ -201,10 +202,13 @@ def generate(settings: Settings, seed: int = 7) -> None:
     small = sorted((m for m in munis if m.get("code")), key=lambda m: m["pop"])[:2]
     suppress = {(m["code"], "01") for m in small}
     raw = settings.layer("raw")
+    axes = load_axes(settings.axes_path)
     for tid, (title, cats) in CATS.items():
         time = TIME_2015 if tid == "D0002" else TIME_2020
         page = _api_page(tid, title, time, _with_aggregates(tables[tid]), names, cats,
                          suppress if tid == "D0003" else set())
         save_raw(raw / tid, [page])
+        # fetch 段階が「取得済み」と判断できるよう、軸定義に対応する取得条件も保存する
+        (raw / tid / "request.json").write_text(json.dumps(table_filters(axes, tid)), encoding="utf-8")
     settings.boundary_path.parent.mkdir(parents=True, exist_ok=True)
     settings.boundary_path.write_text(json.dumps(_boundary(munis), ensure_ascii=False), encoding="utf-8")

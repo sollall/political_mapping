@@ -103,6 +103,19 @@ class AxesConfig:
     tables: dict[str, Table]
     axes: list[Axis]
 
+    def without_placeholders(self) -> tuple["AxesConfig", list[str]]:
+        """未記入（TBD）の統計表・カテゴリーを使う軸を除いた定義と、除いた軸のIDを返す。"""
+        def todo(a: Axis) -> bool:
+            return any(
+                q.stats_data_id.startswith(PLACEHOLDER) or any(c.startswith(PLACEHOLDER) for v in q.filter.values() for c in v)
+                for q in a.quantities()
+            )
+
+        keep = [a for a in self.axes if not todo(a)]
+        used = {q.stats_data_id for a in keep for q in a.quantities()}
+        tables = {k: t for k, t in self.tables.items() if k in used}
+        return AxesConfig(tables=tables, axes=keep), [a.axis_id for a in self.axes if todo(a)]
+
     def placeholders(self) -> list[str]:
         """「TBD」で始まる未記入の統計表ID・カテゴリーコードの一覧。"""
         out = [f"統計表 {t}" for t in self.tables if t.startswith(PLACEHOLDER)]

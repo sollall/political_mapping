@@ -306,3 +306,16 @@ def test_table_meta():
     text = explore.format_meta(meta)
     assert "[cat01] 年齢（2 件）" in text and "065  65歳以上" in text
     assert "…ほか 5 件" in text  # 地域は先頭だけ
+
+
+def test_table_filters_and_skip_placeholders():
+    real = load_axes(ROOT / "config/axes.yaml")
+    axes, skipped = real.without_placeholders()
+    assert skipped == ["minorities_foreign"]
+    assert axes.placeholders() == []
+    f = fetch.table_filters(axes, "0003450620")
+    assert f["cdCat01"] == ["0"]
+    assert f["cdCat02"] == ["1", "11", "12", "13", "2", "3", "4", "5", "6", "7"]
+    # 0003445190 は全軸で cat01/cat02/cat04 を総数に絞っている
+    f = fetch.table_filters(axes, "0003445190")
+    assert f["cdCat01"] == ["0"] and f["cdCat04"] == ["0"] and "R3" in f["cdCat03"]
