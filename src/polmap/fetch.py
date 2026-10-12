@@ -100,6 +100,9 @@ def save_raw(out_dir: Path, pages: list[dict]) -> None:
 
 def run(settings: Settings, axes: AxesConfig, force: bool = False) -> None:
     raw_dir = settings.layer("raw")
+    todo = axes.placeholders()
+    if todo:
+        raise RuntimeError("axes.yaml に未記入（TBD）の統計表ID・カテゴリーコードがあります: " + "; ".join(todo))
     app_id = settings.app_id
     for tid in sorted(axes.tables):
         out = raw_dir / tid

@@ -67,7 +67,12 @@ def main(argv: list[str] | None = None) -> int:
             a = load_axes(s.axes_path)
             print(f"OK: 統計表 {len(a.tables)} 件、軸 {len(a.axes)} 件")
             for ax in a.axes:
-                print(f"  {ax.axis_id:<28} {ax.formula:<10} {ax.group:<8} {ax.name}")
+                print(f"  {ax.axis_id:<32} {ax.formula:<10} {ax.group:<8} {ax.name}")
+            todo = a.placeholders()
+            if todo:
+                print(f"未記入（TBD）{len(todo)} 件:")
+                for t in todo:
+                    print(f"  {t}")
             return 0
         if args.cmd == "demo":
             from . import demo

@@ -95,10 +95,22 @@ class Table:
     title: str = ""
 
 
+PLACEHOLDER = "TBD"
+
+
 @dataclass
 class AxesConfig:
     tables: dict[str, Table]
     axes: list[Axis]
+
+    def placeholders(self) -> list[str]:
+        """「TBD」で始まる未記入の統計表ID・カテゴリーコードの一覧。"""
+        out = [f"統計表 {t}" for t in self.tables if t.startswith(PLACEHOLDER)]
+        for a in self.axes:
+            codes = {c for q in a.quantities() for v in q.filter.values() for c in v if c.startswith(PLACEHOLDER)}
+            if codes:
+                out.append(f"{a.axis_id}: カテゴリーコード {len(codes)} 件")
+        return out
 
 
 @dataclass

@@ -55,9 +55,18 @@ def test_unregistered_table(tmp_path):
 def test_repo_configs_load():
     s = load_settings(ROOT / "config/settings.yaml")
     assert s.prefectures == ["13"]
-    load_axes(s.axes_path)  # テンプレート（軸は空）も読み込める
+    real = load_axes(s.axes_path)
+    assert len(real.axes) == 16  # Democracy 4 の有権者グループに基づく軸
+    assert real.placeholders()  # 統計表IDは未記入（TBD）
     d = load_axes(ROOT / "config/demo/axes.yaml")
     assert len(d.axes) == 8
+    assert d.placeholders() == []
+
+
+def test_fetch_refuses_placeholders():
+    s = load_settings(ROOT / "config/settings.yaml")
+    with pytest.raises(RuntimeError, match="TBD"):
+        fetch.run(s, load_axes(s.axes_path))
 
 
 # ---------------------------------------------------------------- 取得・整形
