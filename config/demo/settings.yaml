@@ -1,0 +1,47 @@
+# デモ用設定（合成データ）。polmap demo で使う
+root: ../..
+axes: axes.yaml
+
+paths:
+  data: data/demo
+  web_data: web/data
+  reports: reports/demo
+  boundary: data/demo/boundary/N03-demo.geojson
+  boundary_changes: config/demo/boundary_changes.csv
+
+scope:
+  year: 2020
+  prefectures: []
+  extra_aggregate_codes: ["99100"]  # デモ市（区のある市）の市全体
+
+compute:
+  suppressed_policy: missing
+
+normalize:
+  weighting: none
+  winsorize_sigma: 3
+
+small_population:
+  threshold: 1000
+  method: exclude
+
+pca:
+  cumulative_threshold: 0.7
+  min_components: 2
+  max_components: 4
+  names: {}
+
+cluster:
+  k_range: [4, 8]
+  names: {}
+
+seed: 20201001
+
+map:
+  title: 政治地理マップ（デモ・合成データ）
+  simplify_tolerance: 0
+
+quality:
+  total_tolerance: 0.5
+  unknown_rate_threshold: 0.05
+  correlation_threshold: 0.7

@@ -1,0 +1,39 @@
+# 軸定義（仕様書 第5章・第6章）
+#
+# tables: 使う統計表（e-Stat の statsDataId）と調査年
+# axes:   1軸＝1概念。分子・分母はカテゴリーコードの和で書く
+#
+# 統計表IDとカテゴリーコードは e-Stat の getMetaInfo で確認してから記入すること。
+# 軸の書き方は config/demo/axes.yaml（合成データ用）も参考になる。
+
+tables: {}
+#  "00032xxxxx": {year: 2020, title: "年齢（3区分）別人口 - 市区町村"}
+#  "00031xxxxx": {year: 2015, title: "人口 - 市区町村（2015年）"}
+
+axes: []
+#  - axis_id: population_aging
+#    name: "若年・生産年齢 ↔ 高齢"        # 正の向き（値が大きい側）を右に書く
+#    group: 人口構成
+#    formula: ratio                      # ratio / difference / growth
+#    stats_data_id: "00032xxxxx"
+#    numerator:   {cat01: ["003"]}       # 65歳以上
+#    denominator: {cat01: ["001", "002", "003"]}  # 不詳を除いた総数
+#    unknown:     {cat01: ["004"]}       # 不詳（不詳率の計算用、任意）
+#    small_area: true                    # 町丁目単位で取得できるか（任意）
+#    known_bias: ""                      # 漏れや過大評価の注記（任意）
+#    updatable_2025: true                # 2025年簡易調査で更新できるか（任意）
+#
+#  - axis_id: industry_manufacturing
+#    name: "農林漁業 ↔ 製造業"
+#    group: 仕事
+#    formula: difference                 # terms[0] − terms[1]
+#    terms:
+#      - {stats_data_id: "...", numerator: {cat01: ["02"]}, denominator: {cat01: ["01", "02", "03"]}}
+#      - {stats_data_id: "...", numerator: {cat01: ["01"]}, denominator: {cat01: ["01", "02", "03"]}}
+#
+#  - axis_id: population_growth
+#    name: "人口減少 ↔ 人口増加"
+#    group: 人口構成
+#    formula: growth                     # current / base − 1（base は2020年境界に組み替え済み）
+#    current: {stats_data_id: "...2020の表...", filter: {cat01: ["000"]}}
+#    base:    {stats_data_id: "...2015の表...", filter: {cat01: ["000"]}}

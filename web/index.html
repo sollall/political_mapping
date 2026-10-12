@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>政治地理マップ</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1 id="title">政治地理マップ</h1>
+  <span id="scope" class="muted"></span>
+</header>
+<main class="layout">
+  <aside class="panel" aria-label="表示の設定">
+    <section class="controls">
+      <div class="seg" role="radiogroup" aria-label="表示モード" id="modes">
+        <button role="radio" data-mode="axis" aria-checked="true">単一軸</button>
+        <button role="radio" data-mode="bivariate" aria-checked="false">2軸</button>
+        <button role="radio" data-mode="pca" aria-checked="false">主成分</button>
+        <button role="radio" data-mode="cluster" aria-checked="false">地域類型</button>
+      </div>
+      <label class="field" id="f-axis1"><span>軸</span><select id="axis1"></select></label>
+      <label class="field" id="f-axis2" hidden><span>縦の軸</span><select id="axis2"></select></label>
+      <label class="field" id="f-pc" hidden><span>主成分</span><select id="pc"></select></label>
+      <label class="field" id="f-breaks"><span>階級区分</span>
+        <select id="breaks">
+          <option value="fixed">固定（±0.5σ刻み）</option>
+          <option value="quantile">分位点（7区分）</option>
+        </select>
+      </label>
+      <label class="check"><input type="checkbox" id="hatch" checked> 小人口の地域に斜線</label>
+    </section>
+    <section id="legend" class="legend" aria-live="polite"></section>
+    <section id="info" class="info"></section>
+    <section id="profile" class="profile" aria-live="polite">
+      <p class="muted">地図上の市区町村をクリックすると、全軸のプロフィールを表示します。</p>
+    </section>
+    <details class="table-view">
+      <summary>一覧表で見る</summary>
+      <div id="table"></div>
+    </details>
+  </aside>
+  <div class="map-wrap">
+    <div id="map" role="region" aria-label="市区町村の地図"></div>
+    <div id="tooltip" class="tooltip" hidden></div>
+    <div id="status" class="status"></div>
+  </div>
+</main>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

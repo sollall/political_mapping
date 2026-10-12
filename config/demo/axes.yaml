@@ -1,0 +1,92 @@
+# デモ用の軸定義（合成データ D0001〜D0007 に対応。実在の統計表IDではない）
+tables:
+  D0001: {year: 2020, title: 年齢（3区分）別人口}
+  D0002: {year: 2015, title: 人口（2015年）}
+  D0003: {year: 2020, title: 産業（大分類）別就業者数}
+  D0004: {year: 2020, title: 最終卒業学校別人口}
+  D0005: {year: 2020, title: 住宅の所有関係別世帯数}
+  D0006: {year: 2020, title: 従業地別就業者数}
+  D0007: {year: 2020, title: 世帯の家族類型別世帯数}
+
+axes:
+  - axis_id: population_aging
+    name: 若年・生産年齢 ↔ 高齢
+    group: 人口構成
+    formula: ratio
+    stats_data_id: D0001
+    numerator: {cat01: ["003"]}
+    denominator: {cat01: ["001", "002", "003"]}
+    unknown: {cat01: ["004"]}
+    small_area: true
+    updatable_2025: true
+
+  - axis_id: population_growth
+    name: 人口減少 ↔ 人口増加
+    group: 人口構成
+    formula: growth
+    current: {stats_data_id: D0001, filter: {cat01: ["000"]}}
+    base: {stats_data_id: D0002, filter: {cat01: ["000"]}}
+    known_bias: 2015年の値は2020年境界に組み替えて比較
+    updatable_2025: true
+
+  - axis_id: work_tertiary
+    name: 第1・2次産業 ↔ 第3次産業
+    group: 仕事
+    formula: ratio
+    stats_data_id: D0003
+    numerator: {cat01: ["03"]}
+    denominator: {cat01: ["01", "02", "03"]}
+    unknown: {cat01: ["04"]}
+    small_area: true
+    updatable_2025: false
+
+  - axis_id: work_manufacturing
+    name: 農林漁業 ↔ 製造業
+    group: 仕事
+    formula: difference
+    terms:
+      - {stats_data_id: D0003, numerator: {cat01: ["02"]}, denominator: {cat01: ["01", "02", "03"]}}
+      - {stats_data_id: D0003, numerator: {cat01: ["01"]}, denominator: {cat01: ["01", "02", "03"]}}
+    updatable_2025: false
+
+  - axis_id: education_university
+    name: 大学卒が少ない ↔ 大学卒が多い
+    group: 学歴
+    formula: ratio
+    stats_data_id: D0004
+    numerator: {cat01: ["1"]}
+    denominator: {cat01: ["1", "2"]}
+    unknown: {cat01: ["9"]}
+    known_bias: 在学者を含まない。都市部ほど不詳が多い
+    updatable_2025: false
+
+  - axis_id: housing_rental
+    name: 持ち家 ↔ 借家
+    group: 住まい
+    formula: ratio
+    stats_data_id: D0005
+    numerator: {cat01: ["2"]}
+    denominator: {cat01: ["1", "2"]}
+    unknown: {cat01: ["9"]}
+    updatable_2025: true
+
+  - axis_id: mobility_commute_out
+    name: 地元で従業 ↔ 他市区町村へ通勤
+    group: 生活・移動
+    formula: ratio
+    stats_data_id: D0006
+    numerator: {cat01: ["2"]}
+    denominator: {cat01: ["1", "2"]}
+    unknown: {cat01: ["9"]}
+    known_bias: 2020年はコロナ禍で在宅勤務の影響があり得る
+    updatable_2025: false
+
+  - axis_id: family_single
+    name: 家族世帯 ↔ 単独世帯
+    group: 家族
+    formula: ratio
+    stats_data_id: D0007
+    numerator: {cat01: ["1"]}
+    denominator: {cat01: ["1", "2", "3"]}
+    unknown: {cat01: ["9"]}
+    updatable_2025: true
