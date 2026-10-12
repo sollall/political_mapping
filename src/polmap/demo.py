@@ -142,7 +142,7 @@ def _api_page(tid: str, title: str, time: str, table: dict[str, dict], names: di
     values = []
     for area, cells in sorted(table.items()):
         for cat, v in cells.items():
-            raw = "-" if (area, cat) in suppress else str(int(v))
+            raw = "X" if (area, cat) in suppress else str(int(v))
             values.append({"@tab": "020", "@cat01": cat, "@area": area, "@time": time, "@unit": "人", "$": raw})
     class_obj = [
         {"@id": "tab", "@name": "表章項目", "CLASS": {"@code": "020", "@name": "人数", "@level": ""}},

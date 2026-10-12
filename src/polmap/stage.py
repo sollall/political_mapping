@@ -1,6 +1,7 @@
 """第2段階: 地域コード×カテゴリー×値の縦持ち形式に揃える（staging層）。
 
-秘匿・欠損の記号（「-」「…」「X」「***」など数値でない値）は欠損に変換し、
+国勢調査の「-」は「該当数値なし」（0）なので 0 にする。
+秘匿・不詳の記号（「X」「…」「***」など、それ以外の数値でない値）は欠損に変換し、
 suppressed=True を立てる。
 """
 from __future__ import annotations
@@ -17,8 +18,12 @@ log = logging.getLogger(__name__)
 NON_DIM_COLUMNS = {"area", "value", "unit", "annotation"}
 
 
+ZERO_MARKS = ["-", "－", "―"]  # 該当数値なし（0）
+
+
 def parse_values(s: pd.Series) -> tuple[pd.Series, pd.Series]:
     txt = s.astype("string").str.replace(",", "", regex=False).str.strip()
+    txt = txt.mask(txt.isin(ZERO_MARKS), "0")
     num = pd.to_numeric(txt, errors="coerce")
     return num.astype(float), num.isna()
 

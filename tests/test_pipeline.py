@@ -108,11 +108,12 @@ def test_fetch_follows_next_key():
 
 def test_stage_marks_suppressed():
     raw = pd.DataFrame({"cat01": ["1", "2", "3", "4"], "area": ["1101", "01101", "01101", "01101"],
-                        "value": ["1,234", "-", "…", "5"]})
+                        "value": ["1,234", "-", "…", "X"]})
     s = stage.stage_table(raw, "T1", 2020)
     assert s["area_code"].tolist()[0] == "01101"
     assert s["value"].tolist()[0] == 1234
-    assert s["suppressed"].tolist() == [False, True, True, False]
+    assert s["suppressed"].tolist() == [False, False, True, True]  # 「-」は0、「…」「X」は欠損
+    assert s["value"].tolist()[1] == 0
 
 
 # ---------------------------------------------------------------- 境界の揃え込み
