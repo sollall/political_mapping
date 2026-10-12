@@ -265,3 +265,44 @@ def test_dotenv(tmp_path, monkeypatch):
 
     assert os.environ["ESTAT_APP_ID"] == "abc123"
     assert os.environ["POLMAP_KEEP"] == "fromenv"  # 既存の環境変数が優先
+
+
+# ---------------------------------------------------------------- e-Stat 検索（polmap search / meta）
+
+class FakeGetSession:
+    def __init__(self, payload):
+        self.payload, self.calls = payload, []
+
+    def get(self, url, params, timeout):
+        self.calls.append((url, params))
+        return FakeResp(self.payload)
+
+
+def test_search_tables():
+    from polmap import explore
+
+    payload = {"GET_STATS_LIST": {"RESULT": {"STATUS": 0}, "DATALIST_INF": {"TABLE_INF": {
+        "@id": "0003445078", "TITLE": {"@no": "1", "$": "年齢（5歳階級）別人口"},
+        "STATISTICS_NAME": "令和2年国勢調査", "SURVEY_DATE": "202010", "OVERALL_TOTAL_NUMBER": "100"}}}}
+    sess = FakeGetSession(payload)
+    rows = explore.search_tables("APPID", "年齢", session=sess)
+    assert rows[0]["id"] == "0003445078" and rows[0]["title"] == "年齢（5歳階級）別人口"
+    url, params = sess.calls[0]
+    assert url.endswith("getStatsList") and params["statsCode"] == "00200521" and params["collectArea"] == 3
+    assert "0003445078" in explore.format_search(rows)
+
+
+def test_table_meta():
+    from polmap import explore
+
+    payload = {"GET_META_INFO": {"RESULT": {"STATUS": 0}, "METADATA_INF": {
+        "TABLE_INF": {"TITLE": "年齢別人口"},
+        "CLASS_INF": {"CLASS_OBJ": [
+            {"@id": "cat01", "@name": "年齢", "CLASS": [{"@code": "000", "@name": "総数", "@level": "1"},
+                                                     {"@code": "065", "@name": "65歳以上", "@level": "2"}]},
+            {"@id": "area", "@name": "地域", "CLASS": [{"@code": f"13{i:03d}", "@name": f"区{i}", "@level": "2"} for i in range(10)]},
+        ]}}}}
+    meta = explore.table_meta("APPID", "0003445078", session=FakeGetSession(payload))
+    text = explore.format_meta(meta)
+    assert "[cat01] 年齢（2 件）" in text and "065  65歳以上" in text
+    assert "…ほか 5 件" in text  # 地域は先頭だけ

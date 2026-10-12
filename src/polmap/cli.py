@@ -9,6 +9,8 @@ import logging
 import sys
 from pathlib import Path
 
+import requests
+
 from . import align, analyze, compute, fetch, mapdata, stage, validate
 from .config import STAGES, ConfigError, load_axes, load_settings
 
@@ -59,6 +61,18 @@ def main(argv: list[str] | None = None) -> int:
     d = sub.add_parser("demo", help="合成データでパイプライン全体を動かす（ネットワーク不要）")
     d.add_argument("-c", "--config", default="config/demo/settings.yaml")
 
+    se = sub.add_parser("search", help="国勢調査の統計表を e-Stat でキーワード検索する（統計表IDを調べる）")
+    se.add_argument("words", help="検索語（空白区切りで AND。例: 年齢 5歳階級）")
+    se.add_argument("--year", default="2020", help="調査年（既定 2020）")
+    se.add_argument("--area", default="municipality", choices=["municipality", "prefecture", "national", "all"],
+                    help="集計地域（既定 municipality＝市区町村）")
+    se.add_argument("--limit", type=int, default=50)
+    se.add_argument("-c", "--config", default="config/settings.yaml")
+
+    me = sub.add_parser("meta", help="統計表の次元とカテゴリーコードを一覧する")
+    me.add_argument("stats_data_id", nargs="+", help="統計表ID（statsDataId）。複数可")
+    me.add_argument("-c", "--config", default="config/settings.yaml")
+
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     try:
@@ -74,6 +88,18 @@ def main(argv: list[str] | None = None) -> int:
                 for t in todo:
                     print(f"  {t}")
             return 0
+        if args.cmd in ("search", "meta"):
+            from . import explore
+
+            app_id = load_settings(args.config).app_id  # .env も読み込まれる
+            if not app_id:
+                raise RuntimeError("ESTAT_APP_ID がありません。.env に ESTAT_APP_ID=... を書いてください")
+            if args.cmd == "search":
+                print(explore.format_search(explore.search_tables(app_id, args.words, args.year, args.area, args.limit)))
+            else:
+                for i, tid in enumerate(args.stats_data_id):
+                    print(("\n" + "=" * 60 + "\n" if i else "") + explore.format_meta(explore.table_meta(app_id, tid)))
+            return 0
         if args.cmd == "demo":
             from . import demo
 
@@ -87,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         if overall is not None:
             print(f"検証: {overall}")
         return 1 if args.strict and overall == "fail" else 0
-    except (ConfigError, FileNotFoundError, RuntimeError, ValueError) as e:
+    except (ConfigError, FileNotFoundError, RuntimeError, ValueError, requests.RequestException) as e:
         log.error("%s", e)
         return 2
 
