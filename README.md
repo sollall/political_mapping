@@ -36,7 +36,7 @@ polmap run --to compute              # 途中の段階まで
 
 ```
 config/
-  settings.yaml          パス・対象範囲・正規化・PCA・クラスタリング・品質基準の設定
+  settings.yaml          パス・対象範囲・正規化・クラスタリング・品質基準の設定
   axes.yaml              軸定義（仕様書 第5・6章）
   boundary_changes.csv   2015→2020 の合併・分割対応表
   demo/                  デモ用の設定と軸定義
@@ -45,11 +45,11 @@ src/polmap/
   stage.py      2. 整形       地域×カテゴリー×値の縦持ち、秘匿値（-、… など）を欠損に
   align.py      3. 境界揃え   全国・都道府県・政令市の市全体・特別区部を除外、2015年値を2020年境界へ組み替え
   compute.py    4. 指標計算   比率・比率の差・増減率 → mart層
-  analyze.py    5. 統合分析   zスコア（加重/非加重）、ウィンソライズ、小人口処理、PCA、k-means + Ward
+  analyze.py    5. 統合分析   zスコア（加重/非加重）、ウィンソライズ、小人口処理、k-means + Ward
   mapdata.py    6. 地図用     N03 と結合、TopoJSON + 属性JSON を web/data/ へ
   validate.py   7. 検証       仕様書 第10章のチェック → reports/validation.md
   demo.py       合成データの生成
-web/            MapLibre GL JS のビューア（単一軸・2軸・主成分・地域類型）
+web/            MapLibre GL JS のビューア（単一軸・2軸・地域類型）
 tests/          pytest
 ```
 
@@ -86,15 +86,14 @@ tests/          pytest
 - **秘匿値**: `compute.suppressed_policy: missing`（既定）は、秘匿セルを1つでも含む合計を欠損にする。`skip` で秘匿セルを除いて合計する。
 - **zスコア**: 非加重と加重（各軸の分母で加重）の両方を計算・保存し、`normalize.weighting` で採用する方を選ぶ。平均と標準偏差は対象範囲（試作中はその都道府県）の市区町村から計算する。
 - **小人口**: `small_population.threshold`（暫定 1000）未満にフラグ。`method: exclude` は統合分析から除外、`eb` は比率の軸を経験ベイズで平滑化する。地図上は斜線で注記し、除外した地域も元の値の位置で色を塗る。
-- **主成分**: 累積寄与率 `pca.cumulative_threshold` に達する本数（2〜4本に制限）。符号は負荷量の絶対値が最大の軸が正になる向きに固定。名前は負荷量最大の軸から仮に付け、`pca.names` で上書きする。
-- **クラスター**: 主成分スコアに k-means（シード固定）。`cluster.k_range` の中でシルエット係数が最大の k を採用し、Ward法との一致度（ARI）を `cluster_selection.csv` に記録する。類型名は `cluster.names` で人が付ける。
+- **クラスター**: 各軸のzスコアに直接 k-means（主成分分析はしない）（シード固定）。`cluster.k_range` の中でシルエット係数が最大の k を採用し、Ward法との一致度（ARI）を `cluster_selection.csv` に記録する。類型名は `cluster.names` で人が付ける。
 - **政令市**: 2020年10月1日時点の20市の市全体コードと特別区部（13100）を除外する。
 
 ## ビューア
 
 `web/index.html` は `web/data/` の3ファイルを読む（`?data=別のディレクトリ` で切り替え可）。
 
-- 単一軸 / 主成分: 発散型（青 ↔ 赤、中央 ±0.5σ はグレー）。固定区分と分位点区分を切り替えられる
+- 単一軸: 発散型（青 ↔ 赤、中央 ±0.5σ はグレー）。固定区分と分位点区分を切り替えられる
 - 2軸: 各軸を3分位にした 3×3 のバイバリエイト配色
 - 地域類型: カテゴリー配色。凡例をクリックするとその類型だけを強調
 - ツールチップ: 市区町村名、元の値、zスコア、順位、分母

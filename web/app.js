@@ -1,7 +1,7 @@
 /* 政治地理マップ ビューア
  * data/municipalities.topojson … 市区町村ポリゴン
  * data/data.json               … 地域ごとの値（v[axis] = [value, z, rank, denominator, small, excluded]）
- * data/meta.json               … 軸・主成分・クラスターの説明
+ * data/meta.json               … 軸・クラスターの説明
  */
 (() => {
   "use strict";
@@ -35,7 +35,7 @@
   };
 
   const state = {
-    mode: "axis", axis1: null, axis2: null, pc: 0, breaks: "fixed", hatch: true,
+    mode: "axis", axis1: null, axis2: null, breaks: "fixed", hatch: true,
     selected: null, isolate: null,
   };
   let META, AREAS, GEO, map, axisById = {};
@@ -77,11 +77,6 @@
     return `${v >= 0 ? "+" : ""}${fmt(v * 100, 1)}pt`;
   }
 
-  const pcStd = [];
-  function pcScore(code, i) {
-    const a = AREAS[code];
-    return a && a.pc ? a.pc[i] : null;
-  }
 
   // ------------------------------------------------------------ 階級区分
 
@@ -105,13 +100,6 @@
   function currentMetric() {
     // 返り値: {get(code) → 数値（σ単位）, breaks, labelL, labelR, title}
     const codes = Object.keys(AREAS);
-    if (state.mode === "pca") {
-      const p = META.pca[state.pc];
-      const sd = pcStd[state.pc] || 1;
-      const get = (c) => { const s = pcScore(c, state.pc); return s == null ? null : s / sd; };
-      const breaks = state.breaks === "fixed" ? FIXED_BREAKS : quantileBreaks(codes.map(get), 7);
-      return { get, breaks, left: p.left, right: p.right, title: `${p.id}: ${p.name}${p.provisional ? "（仮の名前）" : ""}` };
-    }
     const ax = axisById[state.axis1];
     const get = (c) => { const r = axisRec(c, ax.id); return r ? r.zd : null; };
     const breaks = state.breaks === "fixed" ? FIXED_BREAKS : quantileBreaks(codes.map(get), 7);
@@ -146,7 +134,7 @@
         const i = classify(m.get(c), m.breaks);
         return i < 0 ? P.noData : P.diverging[i];
       };
-      hatchOf = state.mode === "pca" ? smallAny : (c) => !!(axisRec(c, state.axis1) || {}).small;
+      hatchOf = (c) => !!(axisRec(c, state.axis1) || {}).small;
     }
     for (const f of GEO.features) {
       const c = f.properties.code;
@@ -189,8 +177,6 @@
     const P = pal();
     if (state.mode === "axis") {
       el.innerHTML = rampLegend(currentMetric(), "zスコア（σ）") + commonNotes();
-    } else if (state.mode === "pca") {
-      el.innerHTML = rampLegend(currentMetric(), "主成分スコア（標準偏差単位）") + commonNotes();
     } else if (state.mode === "bivariate") {
       const a1 = axisById[state.axis1], a2 = axisById[state.axis2];
       const cells = [2, 1, 0].map((j) => [0, 1, 2].map((i) => `<span style="background:${P.bivariate[j][i]}"></span>`).join("")).join("");
@@ -221,14 +207,7 @@
 
   function renderInfo() {
     const el = $("info");
-    if (state.mode === "pca") {
-      const p = META.pca[state.pc];
-      const rows = Object.entries(p.loadings).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
-        .map(([id, l]) => `<tr><td>${esc(axisById[id] ? axisById[id].name : id)}</td><td>${l >= 0 ? "+" : ""}${fmt(l, 2)}</td></tr>`).join("");
-      el.innerHTML = `<h2>${p.id} の負荷量</h2>
-        <p>寄与率 ${pct(p.explained)}${p.provisional ? "。名前は負荷量最大の軸から付けた仮の名前です（settings.yaml の pca.names で変更）" : ""}</p>
-        <table class="loadings">${rows}</table>`;
-    } else if (state.mode === "cluster") {
+    if (state.mode === "cluster") {
       const k = state.isolate || (state.selected && AREAS[state.selected] && AREAS[state.selected].cl);
       const c = k && META.clusters.find((x) => x.id === k);
       el.innerHTML = c ? `<h2>${c.id}. ${esc(c.name)} の特徴（全体平均との差）</h2>${barsSvg(META.axes.map((a) => ({ label: a.name, z: c.z[a.id] })))}` : "";
@@ -296,10 +275,6 @@
       head = "<th>市区町村</th><th class='num'>類型</th>";
       rows = codes.filter((c) => AREAS[c].cl).sort((a, b) => AREAS[a].cl - AREAS[b].cl)
         .map((c) => `<tr><td>${esc(AREAS[c].name)}</td><td class="num">${AREAS[c].cl}</td></tr>`);
-    } else if (state.mode === "pca") {
-      head = `<th>市区町村</th><th class="num">${META.pca[state.pc].id} スコア</th>`;
-      rows = codes.filter((c) => pcScore(c, state.pc) != null).sort((a, b) => pcScore(b, state.pc) - pcScore(a, state.pc))
-        .map((c) => `<tr><td>${esc(AREAS[c].name)}</td><td class="num">${fmt(pcScore(c, state.pc), 2)}</td></tr>`);
     } else {
       const ax = axisById[state.axis1];
       head = `<th>順位</th><th>市区町村</th><th class="num">値</th><th class="num">z</th><th class="num">分母</th>`;
@@ -330,10 +305,7 @@
     let body = "";
     if (state.mode === "axis") body = axisBlock(state.axis1);
     else if (state.mode === "bivariate") body = `<p class="flag">${esc(axisById[state.axis1].name)}</p>${axisBlock(state.axis1)}<p class="flag">${esc(axisById[state.axis2].name)}</p>${axisBlock(state.axis2)}`;
-    else if (state.mode === "pca") {
-      const s = pcScore(code, state.pc);
-      body = s == null ? `<p class="flag">統合分析の対象外（欠損または小人口）</p>` : dl([[`${META.pca[state.pc].id} スコア`, fmt(s, 2)]]);
-    } else {
+    else {
       const cl = a.cl && META.clusters.find((x) => x.id === a.cl);
       body = cl ? dl([["地域類型", `${cl.id}. ${esc(cl.name)}`]]) : `<p class="flag">統合分析の対象外（欠損または小人口）</p>`;
     }
@@ -425,8 +397,7 @@
     $("f-axis1").hidden = !(state.mode === "axis" || state.mode === "bivariate");
     $("f-axis1").querySelector("span").textContent = state.mode === "bivariate" ? "横の軸" : "軸";
     $("f-axis2").hidden = state.mode !== "bivariate";
-    $("f-pc").hidden = state.mode !== "pca";
-    $("f-breaks").hidden = !(state.mode === "axis" || state.mode === "pca");
+    $("f-breaks").hidden = state.mode !== "axis";
   }
 
   function fillSelect(sel, items) {
@@ -449,16 +420,7 @@
     state.axis1 = META.axes[0].id;
     state.axis2 = (META.axes[1] || META.axes[0]).id;
     $("axis2").value = state.axis2;
-    if (META.pca) {
-      fillSelect($("pc"), META.pca.map((p, i) => ({ value: i, label: `${p.id}（${pct(p.explained)}）: ${p.name}`, group: "主成分" })));
-      META.pca.forEach((p, i) => {
-        const xs = Object.values(AREAS).map((a) => (a.pc ? a.pc[i] : null)).filter((x) => x != null);
-        const m = xs.reduce((s, x) => s + x, 0) / xs.length;
-        pcStd[i] = Math.sqrt(xs.reduce((s, x) => s + (x - m) ** 2, 0) / xs.length) || 1;
-      });
-    } else {
-      document.querySelectorAll('#modes [data-mode="pca"], #modes [data-mode="cluster"]').forEach((b) => (b.disabled = true));
-    }
+    if (!META.clusters) document.querySelector('#modes [data-mode="cluster"]').disabled = true;
     if (META.axes.length < 2) document.querySelector('#modes [data-mode="bivariate"]').disabled = true;
 
     document.querySelectorAll("#modes button").forEach((b) => b.addEventListener("click", () => {
@@ -468,7 +430,6 @@
     }));
     $("axis1").addEventListener("change", (e) => { state.axis1 = e.target.value; paint(); });
     $("axis2").addEventListener("change", (e) => { state.axis2 = e.target.value; paint(); });
-    $("pc").addEventListener("change", (e) => { state.pc = +e.target.value; paint(); });
     $("breaks").addEventListener("change", (e) => { state.breaks = e.target.value; paint(); });
     $("hatch").addEventListener("change", (e) => { state.hatch = e.target.checked; paint(); });
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {

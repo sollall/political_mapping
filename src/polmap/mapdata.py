@@ -2,8 +2,8 @@
 
 出力（settings.paths.web_data、既定 web/data/）:
   municipalities.topojson … 市区町村ポリゴン（簡略化済み、properties は code / name のみ）
-  data.json               … 地域ごとの軸の値・zスコア・順位・分母・主成分・クラスター
-  meta.json               … 軸・主成分・クラスターの説明
+  data.json               … 地域ごとの軸の値・zスコア・順位・分母・クラスター
+  meta.json               … 軸・クラスターの説明
 """
 from __future__ import annotations
 
@@ -135,9 +135,6 @@ def run(settings: Settings, axes: AxesConfig) -> None:
             _num(r.value), _num(r.z, 4), None if pd.isna(r.rank) else int(r.rank),
             _num(r.denominator, 1), int(bool(r.small)), int(bool(r.excluded)),
         ]
-    if (ana / "pca_scores.parquet").exists():
-        for r in pd.read_parquet(ana / "pca_scores.parquet").itertuples(index=False):
-            by_area[r.area_code]["pc"] = [_num(x, 4) for x in r[1:]]
     if (ana / "clusters.parquet").exists():
         for r in pd.read_parquet(ana / "clusters.parquet").itertuples(index=False):
             by_area[r.area_code]["cl"] = int(r.cluster)
@@ -167,22 +164,6 @@ def run(settings: Settings, axes: AxesConfig) -> None:
             if a.axis_id in first.index
         ],
     }
-    if "pca" in meta_in:
-        var = pd.read_csv(ana / "pca_variance.csv")
-        load = pd.read_csv(ana / "pca_loadings.csv", index_col=0)
-        meta["pca"] = [
-            {
-                "id": pc,
-                "name": meta_in["pca"]["names"][pc],
-                "left": meta_in["pca"]["names"][pc].split("↔")[0].strip(),
-                "right": meta_in["pca"]["names"][pc].split("↔")[1].strip(),
-                "provisional": pc in meta_in["pca"].get("provisional", []),
-                "explained": _num(var.loc[i, "explained_variance_ratio"], 4),
-                "loadings": {ax: _num(load.at[ax, pc], 4) for ax in axis_ids},
-            }
-            for i, pc in enumerate(meta_in["pca"]["components"])
-        ]
-        meta["scree"] = [_num(v, 4) for v in var["explained_variance_ratio"]]
     if "cluster" in meta_in:
         means = pd.read_csv(ana / "cluster_means.csv", index_col=0)
         meta["clusters"] = [

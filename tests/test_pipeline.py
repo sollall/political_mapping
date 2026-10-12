@@ -207,7 +207,7 @@ def test_demo_end_to_end(demo_run):
 def test_demo_layers(demo_run):
     s, _ = demo_run
     for p in ["raw/D0001/values.parquet", "staging/values.parquet", "staging/aligned.parquet",
-              "mart/axes_wide.parquet", "mart/analysis/zscores.parquet", "mart/analysis/pca_loadings.csv",
+              "mart/axes_wide.parquet", "mart/analysis/zscores.parquet", "mart/analysis/cluster_means.csv",
               "mart/analysis/clusters.parquet"]:
         assert (s.data_dir / p).exists(), p
     wide = pd.read_parquet(s.data_dir / "mart/axes_wide.parquet")
@@ -220,7 +220,7 @@ def test_demo_layers(demo_run):
 def test_demo_analysis(demo_run):
     s, _ = demo_run
     meta = json.loads((s.data_dir / "mart/analysis/analysis_meta.json").read_text(encoding="utf-8"))
-    assert 2 <= len(meta["pca"]["components"]) <= 4
+    assert "pca" not in meta
     assert 4 <= meta["cluster"]["k"] <= 8
     z = pd.read_parquet(s.data_dir / "mart/analysis/zscores.parquet")
     assert z["z_clipped"].abs().max() <= 3

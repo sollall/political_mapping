@@ -30,12 +30,6 @@ small_population:
   threshold: 1000            # 暫定値（仕様書第10章「後で決定」）
   method: exclude            # exclude: 分析から除外 / eb: 経験ベイズで平滑化（比率の軸のみ）
 
-pca:
-  cumulative_threshold: 0.7
-  min_components: 2
-  max_components: 4
-  # n_components: 3          # 固定したいときに指定
-  names: {}                  # 例: {PC1: "郊外・持ち家 ↔ 都心・単身"}
 
 cluster:
   k_range: [6, 10]           # シルエット係数が最大の k を採用

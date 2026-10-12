@@ -25,11 +25,6 @@ small_population:
   threshold: 1000
   method: exclude
 
-pca:
-  cumulative_threshold: 0.7
-  min_components: 2
-  max_components: 4
-  names: {}
 
 cluster:
   k_range: [4, 8]

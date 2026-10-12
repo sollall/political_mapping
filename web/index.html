@@ -18,12 +18,10 @@
       <div class="seg" role="radiogroup" aria-label="表示モード" id="modes">
         <button role="radio" data-mode="axis" aria-checked="true">単一軸</button>
         <button role="radio" data-mode="bivariate" aria-checked="false">2軸</button>
-        <button role="radio" data-mode="pca" aria-checked="false">主成分</button>
         <button role="radio" data-mode="cluster" aria-checked="false">地域類型</button>
       </div>
       <label class="field" id="f-axis1"><span>軸</span><select id="axis1"></select></label>
       <label class="field" id="f-axis2" hidden><span>縦の軸</span><select id="axis2"></select></label>
-      <label class="field" id="f-pc" hidden><span>主成分</span><select id="pc"></select></label>
       <label class="field" id="f-breaks"><span>階級区分</span>
         <select id="breaks">
           <option value="fixed">固定（±0.5σ刻み）</option>

@@ -1,6 +1,6 @@
 """第5段階: 正規化と統合分析（仕様書第8章）。
 
-正規化 → 主成分分析 → クラスタリング の順に実行し、mart/analysis/ に保存する。
+正規化 → クラスタリング（各軸のzスコアに直接）の順に実行し、mart/analysis/ に保存する。
 """
 from __future__ import annotations
 
@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import fcluster, linkage
 from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 from sklearn.metrics import adjusted_rand_score, silhouette_score
 
 from .config import AxesConfig, Settings
@@ -83,66 +82,6 @@ def normalize(long: pd.DataFrame, axes: AxesConfig, settings: Settings) -> pd.Da
     return pd.concat(out, ignore_index=True)
 
 
-# ---------------------------------------------------------------- 主成分分析
-
-def choose_components(ratio: np.ndarray, threshold: float, lo: int, hi: int) -> int:
-    cum = np.cumsum(ratio)
-    n = int(np.searchsorted(cum, threshold) + 1)
-    return int(max(min(n, hi, len(ratio)), min(lo, len(ratio))))
-
-
-def run_pca(z: pd.DataFrame, settings: Settings, axes: AxesConfig) -> dict:
-    n_axes = z.shape[1]
-    full = PCA(n_components=n_axes).fit(z.values)
-    ratio = full.explained_variance_ratio_
-    n = settings.get("pca", "n_components")
-    if not n:
-        n = choose_components(
-            ratio,
-            float(settings.get("pca", "cumulative_threshold", default=0.7)),
-            int(settings.get("pca", "min_components", default=2)),
-            int(settings.get("pca", "max_components", default=4)),
-        )
-    n = int(min(n, n_axes))
-    pcs = [f"PC{i + 1}" for i in range(n)]
-    comps = full.components_[:n].copy()
-    # 符号を固定: 絶対値最大の負荷量が正になる向き
-    for i in range(n):
-        if comps[i, np.argmax(np.abs(comps[i]))] < 0:
-            comps[i] *= -1
-    scores = (z.values - full.mean_) @ comps.T
-    loadings = pd.DataFrame(
-        comps.T * np.sqrt(full.explained_variance_[:n]), index=z.columns, columns=pcs
-    )
-    names_cfg = settings.get("pca", "names", default={}) or {}
-    by_id = {a.axis_id: a for a in axes.axes}
-    names = {}
-    for pc in pcs:
-        if pc in names_cfg:
-            names[pc] = names_cfg[pc]
-            continue
-        # 仮の名前: 負荷量の絶対値が最大の軸の「A ↔ B」を、符号に合わせて並べる
-        top = loadings[pc].abs().idxmax()
-        a = by_id[top]
-        left, right = (a.left, a.right) if loadings.at[top, pc] > 0 else (a.right, a.left)
-        names[pc] = f"{left} ↔ {right}"
-    return {
-        "pcs": pcs,
-        "variance": pd.DataFrame(
-            {
-                "component": [f"PC{i + 1}" for i in range(n_axes)],
-                "explained_variance_ratio": ratio,
-                "cumulative": np.cumsum(ratio),
-                "eigenvalue": full.explained_variance_,
-            }
-        ),
-        "loadings": loadings,
-        "scores": pd.DataFrame(scores, index=z.index, columns=pcs),
-        "names": names,
-        "provisional": [pc for pc in pcs if pc not in names_cfg],
-    }
-
-
 # ---------------------------------------------------------------- クラスタリング
 
 def run_clustering(scores: pd.DataFrame, settings: Settings) -> dict:
@@ -201,12 +140,7 @@ def run(settings: Settings, axes: AxesConfig) -> None:
     meta: dict = {"n_areas": int(len(z)), "n_complete": int(len(complete)), "axes": axis_ids}
 
     if len(axis_ids) >= 2 and len(complete) >= 3:
-        pca = run_pca(complete, settings, axes)
-        pca["variance"].to_csv(out / "pca_variance.csv", index=False)
-        pca["loadings"].to_csv(out / "pca_loadings.csv")
-        pca["scores"].reset_index().to_parquet(out / "pca_scores.parquet", index=False)
-        meta["pca"] = {"components": pca["pcs"], "names": pca["names"], "provisional": pca["provisional"]}
-        cl = run_clustering(pca["scores"], settings)
+        cl = run_clustering(complete, settings)
         cl["selection"].to_csv(out / "cluster_selection.csv", index=False)
         cl["labels"].reset_index().to_parquet(out / "clusters.parquet", index=False)
         raw_wide = norm.pivot(index="area_code", columns="axis_id", values="value")[axis_ids]
@@ -216,5 +150,5 @@ def run(settings: Settings, axes: AxesConfig) -> None:
         means.join(zmeans).join(sizes).to_csv(out / "cluster_means.csv")
         meta["cluster"] = {"k": cl["k"], "names": {str(k): v for k, v in cl["names"].items()}}
     else:
-        log.warning("軸が2つ未満、または完全な地域が3未満のため、主成分分析とクラスタリングを省略します")
+        log.warning("軸が2つ未満、または完全な地域が3未満のため、クラスタリングを省略します")
     (out / "analysis_meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")

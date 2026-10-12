@@ -67,7 +67,7 @@ body {
 #map { position: absolute; inset: 0; }
 
 .controls { display: flex; flex-direction: column; gap: 10px; }
-.seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .seg button {
   font: inherit; padding: 6px 4px; border: 0; background: transparent; color: var(--ink-2); cursor: pointer;
 }
