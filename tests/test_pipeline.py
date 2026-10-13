@@ -57,16 +57,19 @@ def test_repo_configs_load():
     assert s.prefectures == ["13"]
     real = load_axes(s.axes_path)
     assert len(real.axes) == 16  # Democracy 4 の有権者グループに基づく軸
-    assert real.placeholders()  # 統計表IDは未記入（TBD）
+    assert real.placeholders() == []  # 統計表IDはすべて記入済み
     d = load_axes(ROOT / "config/demo/axes.yaml")
     assert len(d.axes) == 8
     assert d.placeholders() == []
 
 
-def test_fetch_refuses_placeholders():
+def test_fetch_refuses_placeholders(tmp_path):
     s = load_settings(ROOT / "config/settings.yaml")
+    p = tmp_path / "axes.yaml"
+    p.write_text(yaml.safe_dump({"tables": {"TBD_x": {"year": 2020}}, "axes": [_axis(stats_data_id="TBD_x")]},
+                                allow_unicode=True), encoding="utf-8")
     with pytest.raises(RuntimeError, match="TBD"):
-        fetch.run(s, load_axes(s.axes_path))
+        fetch.run(s, load_axes(p))
 
 
 # ---------------------------------------------------------------- 取得・整形
@@ -312,7 +315,7 @@ def test_table_meta():
 def test_table_filters_and_skip_placeholders():
     real = load_axes(ROOT / "config/axes.yaml")
     axes, skipped = real.without_placeholders()
-    assert skipped == ["minorities_foreign"]
+    assert skipped == []
     assert axes.placeholders() == []
     f = fetch.table_filters(axes, "0003450620")
     assert f["cdCat01"] == ["0"]

@@ -11,7 +11,7 @@ tables:
   "0003450620": {year: 2020, title: 男女，従業上の地位別就業者数（15歳以上）}
   "0003454500": {year: 2020, title: 男女，年齢（5歳階級），常住地又は従業地・通学地別就業者数}
   "0003454514": {year: 2020, title: 利用交通手段，常住地又は従業地・通学地別通勤者・通学者数（15歳以上）}
-  TBD_nationality: {year: 2020, title: 外国人人口（市区町村別の表を検索中）}
+  "0003445244": {year: 2020, title: 男女，国籍別人口}
 
 axes:
   # ---------------------------------------------------------------- 国勢調査でそのまま測れる軸
@@ -113,10 +113,10 @@ axes:
     name: 日本人 ↔ 外国人
     group: 少数民族
     formula: ratio
-    stats_data_id: TBD_nationality
-    numerator:   {cat01: ["TBD:外国人"]}
-    denominator: {cat01: ["TBD:日本人", "TBD:外国人"]}
-    unknown:     {cat01: ["TBD:国籍不詳"]}
+    stats_data_id: "0003445244"        # cat01=男女, cat02=国籍
+    numerator:   {cat01: ["0"], cat02: ["1"]}        # 外国人
+    denominator: {cat01: ["0"], cat02: ["1", "2"]}   # 外国人 + 日本人（国籍不詳を除く）
+    unknown:     {cat01: ["0"], cat02: ["3"]}
     small_area: true
     known_bias: 外国にルーツのある日本国籍者は含まれない
 
