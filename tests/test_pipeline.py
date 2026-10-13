@@ -54,7 +54,7 @@ def test_unregistered_table(tmp_path):
 
 def test_repo_configs_load():
     s = load_settings(ROOT / "config/settings.yaml")
-    assert s.prefectures == ["13"]
+    assert s.prefectures == []  # 既定は全国
     real = load_axes(s.axes_path)
     assert len(real.axes) == 16  # Democracy 4 の有権者グループに基づく軸
     assert real.placeholders() == []  # 統計表IDはすべて記入済み

@@ -16,7 +16,7 @@ estat:
 
 scope:
   year: 2020
-  prefectures: ["13"]        # 試作は1都道府県から。空にすると全国
+  prefectures: []            # 空＝全国。都道府県コードを書くとその範囲に絞る（例: ["13"] で東京都）
   extra_aggregate_codes: []  # 市区町村表から除外したい集計コードがあれば追加
 
 compute:
