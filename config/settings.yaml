@@ -1,0 +1,48 @@
+# 政治地理マップ 設定（仕様書 第3・4・7〜10章）
+# パスはプロジェクトルートからの相対パス
+root: ..
+axes: axes.yaml
+
+paths:
+  data: data                                   # raw / staging / mart の各層
+  web_data: web/data                           # 地図用データの出力先（ビューアが読む）
+  reports: reports                             # 検証レポート
+  boundary: data/boundary/N03-20_200101.geojson # 国土数値情報 行政区域（N03）2020年版
+  boundary_changes: config/boundary_changes.csv # 2015→2020 の合併・分割対応表
+
+estat:
+  app_id_env: ESTAT_APP_ID   # アプリケーションIDは .env か環境変数で渡す（リポジトリに書かない）
+  limit: 100000
+
+scope:
+  year: 2020
+  prefectures: []            # 空＝全国。都道府県コードを書くとその範囲に絞る（例: ["13"] で東京都）
+  extra_aggregate_codes: []  # 市区町村表から除外したい集計コードがあれば追加
+
+compute:
+  suppressed_policy: missing # missing: 秘匿セルを含む合計は欠損 / skip: 秘匿セルを除いて合計
+
+normalize:
+  weighting: none            # none: 非加重 / population: 分母で加重（両方とも計算・保存はする）
+  winsorize_sigma: 3
+
+small_population:
+  threshold: 1000            # 暫定値（仕様書第10章「後で決定」）
+  method: exclude            # exclude: 分析から除外 / eb: 経験ベイズで平滑化（比率の軸のみ）
+
+
+cluster:
+  k_range: [6, 10]           # シルエット係数が最大の k を採用
+  # k: 8                     # 固定したいときに指定
+  names: {}                  # 例: {1: "都心型", 2: "郊外住宅型"}（分析後に人が付ける）
+
+seed: 20201001
+
+map:
+  title: 政治地理マップ（国勢調査2020）
+  simplify_tolerance: 0.0005 # 度。ポリゴン簡略化の許容誤差
+
+quality:
+  total_tolerance: 0.5
+  unknown_rate_threshold: 0.1  # 暫定値（仕様書第10章「後で決定」）
+  correlation_threshold: 0.7
