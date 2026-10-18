@@ -76,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
     me.add_argument("-c", "--config", default="config/settings.yaml")
 
     du = sub.add_parser("dump", help="検索結果とカテゴリーコードを explore/ に書き出す（コミットして共有する用）")
-    du.add_argument("words", nargs="*", help="検索語。省略すると試作の3軸用の語（最終卒業学校・5年前の常住地・住宅の所有の関係）")
+    du.add_argument("words", nargs="*", help="検索語。省略すると追加の3軸用の語（最終卒業学校・5年前の常住地・住宅の所有の関係）")
     du.add_argument("--ids", nargs="*", default=[], help="検索とは別にカテゴリーコードを書き出す統計表ID")
     du.add_argument("--per-search", type=int, default=8, help="検索語ごとにカテゴリーコードを書き出す件数（既定 8）")
     du.add_argument("--area", default="municipality", choices=["municipality", "prefecture", "national", "all"])

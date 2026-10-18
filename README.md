@@ -19,12 +19,12 @@ uv run python -m http.server -d web 8000    # http://localhost:8000/ で地図�
 
 1. **e-Stat のアプリケーションID** を取得し、`.env.example` を `.env` にコピーして `ESTAT_APP_ID=` の後に書く（`.env` はGit管理外。環境変数 `ESTAT_APP_ID` があればそちらが優先）。
 2. **境界データ**: 国土数値情報「行政区域（N03）」2020年版の GeoJSON を `data/boundary/N03-20200101.geojson` に置く（パスは `config/settings.yaml` の `paths.boundary`）。
-3. **軸の統計表IDを埋める**: `config/axes.yaml` には Democracy 4 の有権者グループを参考にした16軸（直接測れる9軸＋代理指標7軸）と、試作中の3軸（大卒率・転入者率・持ち家率）が入っている。16軸は記入済みで、試作の3軸は統計表ID（statsDataId）とカテゴリーコードが `TBD` のままなので、e-Stat で確認して置き換える（`TBD` が残る軸は `polmap run` で除外される）。`uv run polmap check` で未記入の箇所が一覧できる。統計表IDとカテゴリーコードは次のコマンドで調べられる（`.env` のアプリケーションIDを使う）。
+3. **軸の統計表IDを埋める**: `config/axes.yaml` には Democracy 4 の有権者グループを参考にした16軸（直接測れる9軸＋代理指標7軸）と、追加の3軸（大卒率・転入者率・持ち家率）が入っている。持ち家率だけは統計表ID（statsDataId）とカテゴリーコードが `TBD` のままなので、e-Stat で確認して置き換える（`TBD` が残る軸は `polmap run` で除外される）。`uv run polmap check` で未記入の箇所が一覧できる。統計表IDとカテゴリーコードは次のコマンドで調べられる（`.env` のアプリケーションIDを使う）。
 
    ```sh
    uv run polmap search "年齢 5歳階級"      # 国勢調査2020の市区町村別の統計表を検索 → 統計表ID
    uv run polmap meta 0003xxxxxx           # その統計表のカテゴリーコード（cat01 など）を一覧
-   uv run polmap dump                      # 試作の3軸用の検索結果とカテゴリーコードを explore/ に書き出す
+   uv run polmap dump                      # 追加の3軸用の検索結果とカテゴリーコードを explore/ に書き出す
    ```
 
    `polmap dump` の出力（`explore/search.md`、`explore/meta/<統計表ID>.txt`）はコミットして共有できる。検索語を変えるときは `uv run polmap dump 配偶関係 --ids 0003xxxxxx` のように渡す。
