@@ -113,7 +113,7 @@ def format_meta(meta: dict, max_areas: int = 5) -> str:
     return "\n".join(lines)
 
 
-# 追加の3軸（大卒率・転入者率・持ち家率）の表を探す検索語
+# 追加の軸（大卒率・転入者率・持ち家率）の表を探す検索語
 DEFAULT_DUMP_WORDS = ["最終卒業学校", "5年前の常住地", "住宅の所有の関係"]
 
 
