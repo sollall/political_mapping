@@ -24,7 +24,10 @@ uv run python -m http.server -d web 8000    # http://localhost:8000/ で地図�
    ```sh
    uv run polmap search "年齢 5歳階級"      # 国勢調査2020の市区町村別の統計表を検索 → 統計表ID
    uv run polmap meta 0003xxxxxx           # その統計表のカテゴリーコード（cat01 など）を一覧
+   uv run polmap dump                      # 試作の3軸用の検索結果とカテゴリーコードを explore/ に書き出す
    ```
+
+   `polmap dump` の出力（`explore/search.md`、`explore/meta/<統計表ID>.txt`）はコミットして共有できる。検索語を変えるときは `uv run polmap dump 配偶関係 --ids 0003xxxxxx` のように渡す。
 
 4. **合併・分割の対応表**: 2015年の値を使う場合、`config/boundary_changes.csv` を確認・追記する（同梱の行は要確認の例）。
 5. 実行：

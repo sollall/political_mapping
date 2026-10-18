@@ -312,6 +312,24 @@ def test_table_meta():
     assert "…ほか 5 件" in text  # 地域は先頭だけ
 
 
+def test_dump(tmp_path):
+    from polmap import explore
+
+    class Session:
+        def get(self, url, params, timeout):
+            if url.endswith("getStatsList"):
+                return FakeResp({"GET_STATS_LIST": {"RESULT": {"STATUS": 0}, "DATALIST_INF": {"TABLE_INF": [
+                    {"@id": "0003000001", "TITLE": "表1"}, {"@id": "0003000002", "TITLE": "表2"}]}}})
+            return FakeResp({"GET_META_INFO": {"RESULT": {"STATUS": 0}, "METADATA_INF": {
+                "TABLE_INF": {"TITLE": f"表 {params['statsDataId']}"},
+                "CLASS_INF": {"CLASS_OBJ": {"@id": "cat01", "@name": "男女", "CLASS": {"@code": "0", "@name": "総数", "@level": "1"}}}}}})
+
+    written = explore.dump("APPID", tmp_path, ["住宅"], ids=["0003999999"], per_search=1, session=Session())
+    assert sorted(p.name for p in written) == ["0003000001.txt", "0003999999.txt", "search.md"]
+    assert "0003000002  表2" in (tmp_path / "search.md").read_text(encoding="utf-8")
+    assert "0  総数" in (tmp_path / "meta" / "0003000001.txt").read_text(encoding="utf-8")
+
+
 def test_table_filters_and_skip_placeholders():
     real = load_axes(ROOT / "config/axes.yaml")
     axes, skipped = real.without_placeholders()

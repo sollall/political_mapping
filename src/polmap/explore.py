@@ -4,6 +4,7 @@ axes.yaml の「TBD」を埋めるときに使う。
 """
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import requests
@@ -110,3 +111,32 @@ def format_meta(meta: dict, max_areas: int = 5) -> str:
             indent = "  " * max(1, int(c["level"] or 1))
             lines.append(f"{indent}{c['code']}  {c['name']}")
     return "\n".join(lines)
+
+
+# 試作の3軸（axes.yaml の TBD_education / TBD_migration / TBD_housing）の表を探す検索語
+DEFAULT_DUMP_WORDS = ["最終卒業学校", "5年前の常住地", "住宅の所有の関係"]
+
+
+def dump(app_id: str, out_dir: Path, words: list[str], ids: list[str] = (), per_search: int = 8,
+         year: str = "2020", area: str = "municipality", session=None) -> list[Path]:
+    """検索結果と各統計表のカテゴリーコードをテキストに書き出す（コミットして共有する用）。
+
+    out_dir/search.md          … 検索語ごとの検索結果
+    out_dir/meta/<statsDataId>.txt … 検索結果の上位 per_search 件と ids の polmap meta 相当の出力
+    """
+    session = session or requests.Session()
+    out_dir = Path(out_dir)
+    (out_dir / "meta").mkdir(parents=True, exist_ok=True)
+    lines = [f"# e-Stat 検索結果（国勢調査 {year}年、集計地域: {area}）", ""]
+    targets = list(dict.fromkeys(ids))
+    for w in words:
+        rows = search_tables(app_id, w, year, area, session=session)
+        lines += [f"## {w}", "", format_search(rows), ""]
+        targets += [r["id"] for r in rows[:per_search] if r["id"] not in targets]
+    written = [out_dir / "search.md"]
+    written[0].write_text("\n".join(lines), encoding="utf-8")
+    for tid in targets:
+        path = out_dir / "meta" / f"{tid}.txt"
+        path.write_text(format_meta(table_meta(app_id, tid, session)) + "\n", encoding="utf-8")
+        written.append(path)
+    return written

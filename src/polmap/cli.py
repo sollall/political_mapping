@@ -75,6 +75,14 @@ def main(argv: list[str] | None = None) -> int:
     me.add_argument("stats_data_id", nargs="+", help="統計表ID（statsDataId）。複数可")
     me.add_argument("-c", "--config", default="config/settings.yaml")
 
+    du = sub.add_parser("dump", help="検索結果とカテゴリーコードを explore/ に書き出す（コミットして共有する用）")
+    du.add_argument("words", nargs="*", help="検索語。省略すると試作の3軸用の語（最終卒業学校・5年前の常住地・住宅の所有の関係）")
+    du.add_argument("--ids", nargs="*", default=[], help="検索とは別にカテゴリーコードを書き出す統計表ID")
+    du.add_argument("--per-search", type=int, default=8, help="検索語ごとにカテゴリーコードを書き出す件数（既定 8）")
+    du.add_argument("--area", default="municipality", choices=["municipality", "prefecture", "national", "all"])
+    du.add_argument("--out", default="explore", help="出力先（既定 explore/）")
+    du.add_argument("-c", "--config", default="config/settings.yaml")
+
     args = p.parse_args(argv)
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     try:
@@ -90,13 +98,17 @@ def main(argv: list[str] | None = None) -> int:
                 for t in todo:
                     print(f"  {t}")
             return 0
-        if args.cmd in ("search", "meta"):
+        if args.cmd in ("search", "meta", "dump"):
             from . import explore
 
             app_id = load_settings(args.config).app_id  # .env も読み込まれる
             if not app_id:
                 raise RuntimeError("ESTAT_APP_ID がありません。.env に ESTAT_APP_ID=... を書いてください")
-            if args.cmd == "search":
+            if args.cmd == "dump":
+                written = explore.dump(app_id, Path(args.out), args.words or explore.DEFAULT_DUMP_WORDS,
+                                       args.ids, args.per_search, area=args.area)
+                print(f"{len(written)} 件を {args.out}/ に書き出しました")
+            elif args.cmd == "search":
                 print(explore.format_search(explore.search_tables(app_id, args.words, args.year, args.area, args.limit)))
             else:
                 for i, tid in enumerate(args.stats_data_id):
