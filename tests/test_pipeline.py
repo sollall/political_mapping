@@ -56,8 +56,8 @@ def test_repo_configs_load():
     s = load_settings(ROOT / "config/settings.yaml")
     assert s.prefectures == []  # 既定は全国
     real = load_axes(s.axes_path)
-    assert len(real.axes) == 16  # Democracy 4 の有権者グループに基づく軸
-    assert real.placeholders() == []  # 統計表IDはすべて記入済み
+    assert len(real.axes) == 19  # Democracy 4 の有権者グループに基づく16軸 + 試作の3軸
+    assert len(real.placeholders()) == 6  # 試作の3軸だけ未記入（統計表3件 + 軸3件）
     d = load_axes(ROOT / "config/demo/axes.yaml")
     assert len(d.axes) == 8
     assert d.placeholders() == []
@@ -315,7 +315,8 @@ def test_table_meta():
 def test_table_filters_and_skip_placeholders():
     real = load_axes(ROOT / "config/axes.yaml")
     axes, skipped = real.without_placeholders()
-    assert skipped == []
+    assert skipped == ["educated_university", "newcomers_moved_in", "homeowners_owned"]
+    assert len(axes.axes) == 16
     assert axes.placeholders() == []
     f = fetch.table_filters(axes, "0003450620")
     assert f["cdCat01"] == ["0"]
