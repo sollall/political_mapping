@@ -56,7 +56,7 @@ def test_repo_configs_load():
     s = load_settings(ROOT / "config/settings.yaml")
     assert s.prefectures == []  # 既定は全国
     real = load_axes(s.axes_path)
-    assert len(real.axes) == 20  # Democracy 4 の有権者グループに基づく16軸 + 追加の4軸
+    assert len(real.axes) == 18  # Democracy 4 の有権者グループに基づく14軸 + 追加の4軸
     assert real.placeholders() == []  # 統計表IDはすべて記入済み
     d = load_axes(ROOT / "config/demo/axes.yaml")
     assert len(d.axes) == 8

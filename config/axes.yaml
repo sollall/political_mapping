@@ -1,4 +1,4 @@
-# 軸定義（仕様書 第5章・第6章）— Democracy 4 の有権者グループを参考にした16軸 + 追加の4軸
+# 軸定義（仕様書 第5章・第6章）— Democracy 4 の有権者グループを参考にした16軸（似ている2軸を除いて14軸） + 追加の4軸
 #
 # 統計表は令和2年国勢調査（全国・都道府県・市区町村の表）。カテゴリーコードは polmap meta で確認したもの。
 # 注意: 男女・年齢など、軸で使わない次元も必ず「総数」に絞ること（絞らないと総数・男・女が重複して足される）。
@@ -28,21 +28,6 @@ axes:
     denominator: {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["R1", "R2", "R3"]}   # 年齢不詳を除く
     unknown:     {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["22"]}
     small_area: true
-
-  - axis_id: young_aged20_34
-    name: 中高年 ↔ 若年
-    group: 若者
-    formula: ratio
-    stats_data_id: "0003445190"
-    numerator:   {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["05", "06", "07"]}  # 20〜34歳
-    denominator:                                                                        # 20歳以上
-      cat01: ["0"]
-      cat02: ["0"]
-      cat04: ["0"]
-      cat03: ["05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"]
-    unknown:     {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["22"]}
-    small_area: true
-    known_bias: 大学のある市区町村で高く出る
 
   # 0003445284: cat01=世帯の家族類型, cat02=世帯員の年齢による世帯の種類
   - axis_id: parents_with_children
@@ -141,17 +126,7 @@ axes:
     stats_data_id: "0003450620"
     numerator:   {cat01: ["0"], cat02: ["12", "13"]}         # 派遣社員・パート・アルバイト・その他
     denominator: {cat01: ["0"], cat02: ["11", "12", "13"]}   # 雇用者（役員を除く）
-    known_bias: 代理指標。学生や家計補助のパートを含む
-
-  - axis_id: middle_regular
-    name: 正規雇用が少ない ↔ 正規雇用が多い
-    group: 中間所得層
-    formula: ratio
-    stats_data_id: "0003450620"
-    numerator:   {cat01: ["0"], cat02: ["11"]}   # 正規の職員・従業員
-    denominator: *all_status
-    unknown:     *unknown_status
-    known_bias: 代理指標。poor_nonregular と強く逆相関する
+    known_bias: 代理指標。学生や家計補助のパートを含む。正規雇用率の軸はこの軸のほぼ裏返しなので置いていない
 
   - axis_id: capitalists_executives
     name: 役員が少ない ↔ 役員が多い
