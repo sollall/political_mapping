@@ -1,4 +1,4 @@
-# 軸定義（仕様書 第5章・第6章）— Democracy 4 の有権者グループを参考にした16軸
+# 軸定義（仕様書 第5章・第6章）— Democracy 4 の有権者グループを参考にした11軸
 #
 # 統計表は令和2年国勢調査（全国・都道府県・市区町村の表）。カテゴリーコードは polmap meta で確認したもの。
 # 注意: 男女・年齢など、軸で使わない次元も必ず「総数」に絞ること（絞らないと総数・男・女が重複して足される）。
@@ -18,7 +18,7 @@ axes:
   # 0003445190: cat01=国籍総数か日本人, cat02=男女, cat03=年齢, cat04=出生の月
   - axis_id: retired_aged65
     name: 若い ↔ 高齢
-    group: 高齢者
+    group: 若者 ↔ 高齢者
     formula: ratio
     stats_data_id: "0003445190"
     numerator:   {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["R3"]}               # 65歳以上
@@ -26,22 +26,6 @@ axes:
     unknown:     {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["22"]}
     small_area: true
 
-  - axis_id: young_aged20_34
-    name: 中高年 ↔ 若年
-    group: 若者
-    formula: ratio
-    stats_data_id: "0003445190"
-    numerator:   {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["05", "06", "07"]}  # 20〜34歳
-    denominator:                                                                        # 20歳以上
-      cat01: ["0"]
-      cat02: ["0"]
-      cat04: ["0"]
-      cat03: ["05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21"]
-    unknown:     {cat01: ["0"], cat02: ["0"], cat04: ["0"], cat03: ["22"]}
-    small_area: true
-    known_bias: 大学のある市区町村で高く出る
-
-  # 0003445284: cat01=世帯の家族類型, cat02=世帯員の年齢による世帯の種類
   - axis_id: parents_with_children
     name: 子どもなし ↔ 子育て世帯
     group: 親
@@ -54,7 +38,7 @@ axes:
   # 0003450542: cat01=男女, cat02=産業（大分類）, cat03=職業（大分類）
   - axis_id: farmers_primary
     name: 非農林漁業 ↔ 農林漁業
-    group: 農家
+    group: 農家・自営業者
     formula: ratio
     stats_data_id: "0003450542"
     numerator:   {cat01: ["0"], cat03: ["0"], cat02: ["A", "B"]}   # 農業，林業 + 漁業
@@ -63,19 +47,9 @@ axes:
       cat03: ["0"]
       cat02: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S"]  # 分類不能を除く
     unknown:     &unknown_industry {cat01: ["0"], cat03: ["0"], cat02: ["T"]}
-    known_bias: 主な仕事が別の産業の兼業農家は含まれない
+    known_bias: 主な仕事が別の産業の兼業農家は含まれない。自営業者の比率とも強く重なるため兼ねる（都市の商店主は捉えない）
 
   # 0003450620: cat01=男女, cat02=従業上の地位（1=雇用者は 11〜13 の合計）
-  - axis_id: selfemployed_share
-    name: 雇われ ↔ 自営
-    group: 自営業者
-    formula: ratio
-    stats_data_id: "0003450620"
-    numerator:   {cat01: ["0"], cat02: ["3", "4", "5"]}   # 雇人のある業主・雇人のない業主・家族従業者
-    denominator: &all_status {cat01: ["0"], cat02: ["1", "2", "3", "4", "5", "6"]}   # 不詳を除く
-    unknown:     &unknown_status {cat01: ["0"], cat02: ["7"]}
-    known_bias: 農家の自営と重なる
-
   - axis_id: stateemployees_public
     name: 民間 ↔ 公務
     group: 公務員
@@ -123,42 +97,22 @@ axes:
   # ---------------------------------------------------------------- 代理指標（解釈が入る）
   - axis_id: wealthy_managers
     name: 管理職が少ない ↔ 管理職が多い
-    group: 富裕層
+    group: 富裕層・資本家
     formula: ratio
     stats_data_id: "0003450542"
     numerator:   {cat01: ["0"], cat02: ["0"], cat03: ["A"]}   # 管理的職業従事者
     denominator: {cat01: ["0"], cat02: ["0"], cat03: ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]}  # 分類不能を除く
     unknown:     {cat01: ["0"], cat02: ["0"], cat03: ["L"]}
-    known_bias: 代理指標。所得そのものではない
+    known_bias: 代理指標。所得そのものではない。役員の比率とも強く重なるため資本家も兼ねる
 
   - axis_id: poor_nonregular
     name: 正規中心 ↔ 非正規中心
-    group: 貧困層
+    group: 中間所得層 ↔ 貧困層
     formula: ratio
     stats_data_id: "0003450620"
     numerator:   {cat01: ["0"], cat02: ["12", "13"]}         # 派遣社員・パート・アルバイト・その他
     denominator: {cat01: ["0"], cat02: ["11", "12", "13"]}   # 雇用者（役員を除く）
     known_bias: 代理指標。学生や家計補助のパートを含む
-
-  - axis_id: middle_regular
-    name: 正規雇用が少ない ↔ 正規雇用が多い
-    group: 中間所得層
-    formula: ratio
-    stats_data_id: "0003450620"
-    numerator:   {cat01: ["0"], cat02: ["11"]}   # 正規の職員・従業員
-    denominator: *all_status
-    unknown:     *unknown_status
-    known_bias: 代理指標。poor_nonregular と強く逆相関する
-
-  - axis_id: capitalists_executives
-    name: 役員が少ない ↔ 役員が多い
-    group: 資本家
-    formula: ratio
-    stats_data_id: "0003450620"
-    numerator:   {cat01: ["0"], cat02: ["2"]}   # 役員
-    denominator: *all_status
-    unknown:     *unknown_status
-    known_bias: 代理指標。会社の所在地ではなく住所で数える
 
   - axis_id: unionists_manufacturing
     name: 非製造業 ↔ 製造業
@@ -170,25 +124,21 @@ axes:
     unknown:     *unknown_industry
     known_bias: 代理指標。組合加入率ではない
 
-  - axis_id: conservatives_three_generation
-    name: 核家族・単身 ↔ 三世代同居
-    group: 保守
-    formula: ratio
-    stats_data_id: "0003445284"
-    numerator:   {cat02: ["0"], cat01: ["R1"]}             # （再掲）3世代世帯
-    denominator: &known_family_type {cat02: ["0"], cat01: ["1", "2", "3"]}   # 家族類型不詳を除く
-    unknown:     &unknown_family_type {cat02: ["0"], cat01: ["4"]}
-    known_bias: 代理指標。価値観ではなく世帯構成
-
   - axis_id: liberals_single
     name: 家族世帯 ↔ 単独世帯
-    group: リベラル
+    group: 保守 ↔ リベラル
     formula: ratio
     stats_data_id: "0003445284"
     numerator:   {cat02: ["0"], cat01: ["3"]}   # 単独世帯
-    denominator: *known_family_type
-    unknown:     *unknown_family_type
+    denominator: {cat02: ["0"], cat01: ["1", "2", "3"]}   # 家族類型不詳を除く
+    unknown:     {cat02: ["0"], cat01: ["4"]}
     small_area: true
     known_bias: 代理指標。学生や高齢の単身者を含む
 
+# 統合した軸（相関が強く、地域類型への寄与が重複するため。グループは上の軸の両端で表す）:
+#   young_aged20_34（20〜34歳/20歳以上）      → retired_aged65 の逆側（若者）
+#   selfemployed_share（業主・家族従業者）     → farmers_primary（農家・自営業者）
+#   middle_regular（正規の職員・従業員）       → poor_nonregular の逆側（中間所得層）
+#   capitalists_executives（役員）            → wealthy_managers（富裕層・資本家）
+#   conservatives_three_generation（3世代世帯）→ liberals_single の逆側（保守）
 # 対象外（国勢調査では測れない）: 社会主義者・宗教信者・環境保護主義者・愛国者
