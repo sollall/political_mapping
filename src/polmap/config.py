@@ -194,7 +194,7 @@ def load_settings(path: str | Path) -> Settings:
         data_dir=_resolve(root, paths.get("data", "data")),
         web_data_dir=_resolve(root, paths.get("web_data", "web/data")),
         report_dir=_resolve(root, paths.get("reports", "reports")),
-        boundary_path=_resolve(root, paths.get("boundary", "data/boundary/N03-20200101.geojson")),
+        boundary_path=_resolve(root, paths.get("boundary", "data/boundary/N03-20_200101.geojson")),
         boundary_changes_path=_resolve(root, paths.get("boundary_changes")),
         prefectures=prefs,
     )
