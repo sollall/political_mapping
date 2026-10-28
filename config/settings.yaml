@@ -7,7 +7,7 @@ paths:
   data: data                                   # raw / staging / mart の各層
   web_data: web/data                           # 地図用データの出力先（ビューアが読む）
   reports: reports                             # 検証レポート
-  boundary: data/boundary/N03-20200101.geojson  # 国土数値情報 行政区域（N03）2020年版
+  boundary: data/boundary/N03-20_200101.geojson # 国土数値情報 行政区域（N03）2020年版
   boundary_changes: config/boundary_changes.csv # 2015→2020 の合併・分割対応表
 
 estat:
