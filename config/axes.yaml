@@ -1,4 +1,4 @@
-# 軸定義（仕様書 第5章・第6章）— Democracy 4 の有権者グループを参考にした16軸
+# 軸定義（仕様書 第5章・第6章）— Democracy 4 の有権者グループを参考にした14軸
 #
 # 統計表は令和2年国勢調査（全国・都道府県・市区町村の表）。カテゴリーコードは polmap meta で確認したもの。
 # 注意: 男女・年齢など、軸で使わない次元も必ず「総数」に絞ること（絞らないと総数・男・女が重複して足される）。
@@ -140,16 +140,6 @@ axes:
     denominator: {cat01: ["0"], cat02: ["11", "12", "13"]}   # 雇用者（役員を除く）
     known_bias: 代理指標。学生や家計補助のパートを含む
 
-  - axis_id: middle_regular
-    name: 正規雇用が少ない ↔ 正規雇用が多い
-    group: 中間所得層
-    formula: ratio
-    stats_data_id: "0003450620"
-    numerator:   {cat01: ["0"], cat02: ["11"]}   # 正規の職員・従業員
-    denominator: *all_status
-    unknown:     *unknown_status
-    known_bias: 代理指標。poor_nonregular と強く逆相関する
-
   - axis_id: capitalists_executives
     name: 役員が少ない ↔ 役員が多い
     group: 資本家
@@ -170,24 +160,14 @@ axes:
     unknown:     *unknown_industry
     known_bias: 代理指標。組合加入率ではない
 
-  - axis_id: conservatives_three_generation
-    name: 核家族・単身 ↔ 三世代同居
-    group: 保守
-    formula: ratio
-    stats_data_id: "0003445284"
-    numerator:   {cat02: ["0"], cat01: ["R1"]}             # （再掲）3世代世帯
-    denominator: &known_family_type {cat02: ["0"], cat01: ["1", "2", "3"]}   # 家族類型不詳を除く
-    unknown:     &unknown_family_type {cat02: ["0"], cat01: ["4"]}
-    known_bias: 代理指標。価値観ではなく世帯構成
-
   - axis_id: liberals_single
     name: 家族世帯 ↔ 単独世帯
     group: リベラル
     formula: ratio
     stats_data_id: "0003445284"
     numerator:   {cat02: ["0"], cat01: ["3"]}   # 単独世帯
-    denominator: *known_family_type
-    unknown:     *unknown_family_type
+    denominator: &known_family_type {cat02: ["0"], cat01: ["1", "2", "3"]}   # 家族類型不詳を除く
+    unknown:     &unknown_family_type {cat02: ["0"], cat01: ["4"]}
     small_area: true
     known_bias: 代理指標。学生や高齢の単身者を含む
 
