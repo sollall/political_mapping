@@ -446,7 +446,8 @@
     try {
       const [topo, data, meta] = await Promise.all(
         ["municipalities.topojson", "data.json", "meta.json"].map((f) =>
-          fetch(`${DATA_DIR}/${f}`).then((r) => { if (!r.ok) throw new Error(`${f}: ${r.status}`); return r.json(); }))
+          // 再生成したデータが古いキャッシュに隠れないよう、毎回サーバーに更新の有無を確かめる
+          fetch(`${DATA_DIR}/${f}`, { cache: "no-cache" }).then((r) => { if (!r.ok) throw new Error(`${f}: ${r.status}`); return r.json(); }))
       );
       META = meta;
       AREAS = data.areas;
