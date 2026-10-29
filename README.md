@@ -19,7 +19,7 @@ uv run python -m http.server -d web 8000    # http://localhost:8000/ で地図�
 
 1. **e-Stat のアプリケーションID** を取得し、`.env.example` を `.env` にコピーして `ESTAT_APP_ID=` の後に書く（`.env` はGit管理外。環境変数 `ESTAT_APP_ID` があればそちらが優先）。
 2. **境界データ**: 国土数値情報「行政区域（N03）」2020年版の GeoJSON を `data/boundary/N03-20200101.geojson` に置く（パスは `config/settings.yaml` の `paths.boundary`）。
-3. **軸の統計表IDを埋める**: `config/axes.yaml` には Democracy 4 の有権者グループを参考にした16軸（直接測れる9軸＋代理指標7軸）が入っている。統計表ID（statsDataId）とカテゴリーコードは `TBD` のままなので、e-Stat で確認して置き換える。`uv run polmap check` で未記入の箇所が一覧できる。統計表IDとカテゴリーコードは次のコマンドで調べられる（`.env` のアプリケーションIDを使う）。
+3. **軸の統計表IDを埋める**: `config/axes.yaml` には Democracy 4 の有権者グループを参考にした14軸（直接測れる9軸＋代理指標5軸）が入っている。統計表ID（statsDataId）とカテゴリーコードは `TBD` のままなので、e-Stat で確認して置き換える。`uv run polmap check` で未記入の箇所が一覧できる。統計表IDとカテゴリーコードは次のコマンドで調べられる（`.env` のアプリケーションIDを使う）。
 
    ```sh
    uv run polmap search "年齢 5歳階級"      # 国勢調査2020の市区町村別の統計表を検索 → 統計表ID
