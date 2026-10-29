@@ -136,14 +136,16 @@
       };
       hatchOf = (c) => !!(axisRec(c, state.axis1) || {}).small;
     }
+    // 形状はそのままに feature-state だけ更新する（setData はタイルを作り直すので重い）
     for (const f of GEO.features) {
       const c = f.properties.code;
       const known = !!AREAS[c];
-      f.properties._c = known ? colorOf(c) : P.noData;
-      f.properties._h = known && state.hatch && hatchOf(c) ? 1 : 0;
-      f.properties._o = state.mode === "cluster" && state.isolate && AREAS[c] && AREAS[c].cl !== state.isolate ? 0.18 : 1;
+      map.setFeatureState({ source: "areas", id: c }, {
+        c: known ? colorOf(c) : P.noData,
+        h: known && state.hatch && hatchOf(c) ? 1 : 0,
+        o: state.mode === "cluster" && state.isolate && AREAS[c] && AREAS[c].cl !== state.isolate ? 0.18 : 1,
+      });
     }
-    map.getSource("areas").setData(GEO);
     map.setPaintProperty("fill-outline", "line-color", P.outline);
     map.setPaintProperty("hover", "line-color", P.hover);
     renderLegend();
@@ -268,6 +270,8 @@
   // ------------------------------------------------------------ 一覧表
 
   function renderTable() {
+    // 一覧表は全地域ぶんの行を作るので、開いているときだけ描く
+    if (!$("table-view").open) return;
     const el = $("table");
     const codes = Object.keys(AREAS);
     let rows, head;
@@ -353,18 +357,31 @@
     map.on("load", () => {
       const h = hatchImage();
       map.addImage("hatch", h.image, { pixelRatio: h.ratio });
-      map.addSource("areas", { type: "geojson", data: GEO });
-      map.addLayer({ id: "fill", type: "fill", source: "areas", paint: { "fill-color": ["get", "_c"], "fill-opacity": ["get", "_o"] } });
-      map.addLayer({ id: "hatch", type: "fill", source: "areas", filter: ["==", ["get", "_h"], 1], paint: { "fill-pattern": "hatch", "fill-opacity": ["get", "_o"] } });
+      // 色・強調・斜線・ホバー・選択はすべて feature-state で切り替える。
+      // filter や setData を変えるとタイルの再生成が走るため、形状は最初に一度だけ渡す。
+      // 簡略化済みの境界なので maxzoom 以上は拡大表示で足り、ズームごとのタイル生成も減らせる
+      map.addSource("areas", { type: "geojson", data: GEO, promoteId: "code", maxzoom: 11, tolerance: 0.5 });
+      const st = (k, d) => ["coalesce", ["feature-state", k], d];
+      const flag = (k) => ["case", ["boolean", ["feature-state", k], false], 1, 0];
+      map.addLayer({ id: "fill", type: "fill", source: "areas", paint: { "fill-color": st("c", pal().noData), "fill-opacity": st("o", 1) } });
+      map.addLayer({ id: "hatch", type: "fill", source: "areas", paint: { "fill-pattern": "hatch", "fill-opacity": ["*", st("h", 0), st("o", 1)] } });
       map.addLayer({ id: "fill-outline", type: "line", source: "areas", paint: { "line-color": "#fff", "line-width": 0.6 } });
-      map.addLayer({ id: "hover", type: "line", source: "areas", filter: ["==", ["get", "code"], ""], paint: { "line-color": "#000", "line-width": 2 } });
-      map.addLayer({ id: "selected", type: "line", source: "areas", filter: ["==", ["get", "code"], ""], paint: { "line-color": "#2a78d6", "line-width": 3 } });
+      map.addLayer({ id: "hover", type: "line", source: "areas", paint: { "line-color": "#000", "line-width": 2, "line-opacity": flag("hover") } });
+      map.addLayer({ id: "selected", type: "line", source: "areas", paint: { "line-color": "#2a78d6", "line-width": 3, "line-opacity": flag("sel") } });
+
+      let hovered = null;
+      const setHover = (code) => {
+        if (hovered === code) return;
+        if (hovered != null) map.setFeatureState({ source: "areas", id: hovered }, { hover: false });
+        if (code != null) map.setFeatureState({ source: "areas", id: code }, { hover: true });
+        hovered = code;
+      };
 
       const tip = $("tooltip");
       map.on("mousemove", "fill", (e) => {
         const f = e.features[0];
         map.getCanvas().style.cursor = "pointer";
-        map.setFilter("hover", ["==", ["get", "code"], f.properties.code]);
+        setHover(f.properties.code);
         tip.innerHTML = tooltipHtml(f.properties.code, f.properties.name);
         tip.hidden = false;
         const { x, y } = e.point;
@@ -375,13 +392,14 @@
       });
       map.on("mouseleave", "fill", () => {
         map.getCanvas().style.cursor = "";
-        map.setFilter("hover", ["==", ["get", "code"], ""]);
+        setHover(null);
         tip.hidden = true;
       });
       map.on("click", "fill", (e) => {
         const code = e.features[0].properties.code;
+        if (state.selected != null) map.setFeatureState({ source: "areas", id: state.selected }, { sel: false });
+        map.setFeatureState({ source: "areas", id: code }, { sel: true });
         state.selected = code;
-        map.setFilter("selected", ["==", ["get", "code"], code]);
         renderProfile();
         if (state.mode === "cluster") renderInfo();
       });
@@ -432,6 +450,7 @@
     $("axis2").addEventListener("change", (e) => { state.axis2 = e.target.value; paint(); });
     $("breaks").addEventListener("change", (e) => { state.breaks = e.target.value; paint(); });
     $("hatch").addEventListener("change", (e) => { state.hatch = e.target.checked; paint(); });
+    $("table-view").addEventListener("toggle", renderTable);
     matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
       if (!map) return;
       map.setPaintProperty("bg", "background-color", getComputedStyle(document.documentElement).getPropertyValue("--page").trim());
