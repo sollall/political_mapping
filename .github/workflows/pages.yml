@@ -1,0 +1,109 @@
+# パイプラインを実行して web/ を GitHub Pages に公開する
+#
+# データの種類:
+#   demo  … 合成データ（ネットワーク・アプリケーションID不要）
+#   estat … e-Stat の本番データ（Secrets に ESTAT_APP_ID が必要）
+# 手動実行では画面で選ぶ。main への push では Variables の POLMAP_SOURCE（未設定なら demo）を使う。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source:
+        description: データの種類
+        type: choice
+        options: [demo, estat]
+        default: demo
+      force_fetch:
+        description: 取得済みの統計表も取り直す（estat のみ）
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  SOURCE: ${{ inputs.source || vars.POLMAP_SOURCE || 'demo' }}
+  N03_URL: https://nlftp.mlit.go.jp/ksj/gml/data/N03/N03-2020/N03-20200101_GML.zip
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+
+      - run: uv sync
+
+      - name: デモデータで実行
+        if: env.SOURCE == 'demo'
+        run: uv run polmap demo
+
+      # 境界データ（数百MB）と e-Stat の応答は取り直さずに使い回す
+      - name: 境界データのキャッシュ
+        if: env.SOURCE == 'estat'
+        uses: actions/cache@v4
+        with:
+          path: data/boundary
+          key: n03-2020
+
+      - name: e-Stat 応答のキャッシュ
+        if: env.SOURCE == 'estat'
+        uses: actions/cache@v4
+        with:
+          path: data/raw
+          key: estat-raw-${{ hashFiles('config/axes.yaml') }}
+          restore-keys: estat-raw-
+
+      - name: 境界データ（国土数値情報 N03 2020年版）を取得
+        if: env.SOURCE == 'estat'
+        run: |
+          target=data/boundary/N03-20_200101.geojson
+          if [ ! -f "$target" ]; then
+            mkdir -p data/boundary /tmp/n03
+            curl -fsSL --retry 3 -o /tmp/n03.zip "$N03_URL"
+            unzip -q /tmp/n03.zip -d /tmp/n03
+            find /tmp/n03 -name '*.geojson' -exec mv {} "$target" \;
+          fi
+          ls -lh "$target"
+
+      - name: 本番データで実行
+        if: env.SOURCE == 'estat'
+        env:
+          ESTAT_APP_ID: ${{ secrets.ESTAT_APP_ID }}
+        run: |
+          uv run polmap check
+          uv run polmap run ${{ inputs.force_fetch && '--force-fetch' || '' }}
+
+      - name: 検証レポートを残す
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: reports/
+          if-no-files-found: ignore
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
