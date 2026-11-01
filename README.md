@@ -39,6 +39,18 @@ uv run pytest                        # テスト
 
 既定は全国（`scope.prefectures: []`）。`["13"]` のように都道府県コードを書くとその範囲に絞る。境界データも対象範囲に合わせて N03 の全国版か都道府県版を置く。
 
+## GitHub Pages で公開する
+
+`.github/workflows/pages.yml` が GitHub Actions 上でパイプラインを実行し、`web/` を Pages に公開する（`web/data/` はコミットしなくてよい）。
+
+1. リポジトリの Settings → Pages → Source を **GitHub Actions** にする。
+2. 本番データを使う場合は Settings → Secrets and variables → Actions で
+   - Secrets に `ESTAT_APP_ID`（e-Stat のアプリケーションID）
+   - Variables に `POLMAP_SOURCE` = `estat`（未設定なら main への push はデモデータで公開）
+3. main に push するか、Actions タブの「Deploy to GitHub Pages」から手動実行（`demo` / `estat` を選べる）。
+
+本番データでは境界データ（N03 2020年版）を国土数値情報からダウンロードする。境界データと e-Stat の応答はキャッシュするので、2回目以降は速い。検証レポートは実行結果の Artifacts（`reports`）に残る。
+
 ## 構成
 
 ```
